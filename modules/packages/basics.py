@@ -108,7 +108,21 @@ class OS(interfaces.Package):
     #def distribution_debian_check(self):
     #    SSH.exec_command("cat /etc/debian_version",waitForEnd=False)
 
+    def yum_install(self,commands):
+        commandList=["yum", "-y","install" ]
+        for item in commands:
+            commandList.append(item)
+        result=self.lowlevel.exec_command(commandList)
+        if(result["returncode"]!=0):
+            raise Exception(result)
 
+    def rpm_i(self,url):
+        result=self.lowlevel.exec_command(["rpm", "-i", url])
+        if(result["returncode"]==1):
+            if(result["stderr"].find("already installed")==-1):
+                raise Exception(result)
+        elif(result["returncode"]!=0):
+            raise Exception(result)
         
 class OS_lowlevel(object):
     def __init__(self,parent):
