@@ -131,7 +131,7 @@ class Postgresql(interfaces.Package):
         if(self.version==None):
             command="postgresql"
         else:
-            command="postgresql-"+version
+            command="postgresql-"+self.version
             
         result=self.os().lowlevel.exec_command(["service",command,"initdb"])
         if(result["returncode"]!=0):
