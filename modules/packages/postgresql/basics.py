@@ -98,27 +98,30 @@ class Postgresql(interfaces.Package):
         
     def __install_centos_93__(self):
         tempVersion=self.os().distribution_version.split(".")[0]
-        result=self.os().lowlevel.exec_command(["rpm", "-i", "http://yum.postgresql.org/9.3/redhat/rhel-"+tempVersion+"-"+self.os().hardware_type+"/pgdg-centos93-9.3-1.noarch.rpm"])
-        if(result["returncode"]!=0):
-            raise Exception(result)
+        self.os().rpm_i("http://yum.postgresql.org/9.3/redhat/rhel-"+tempVersion+"-"+self.os().hardware_type+"/pgdg-centos93-9.3-1.noarch.rpm")
+        #result=self.os().lowlevel.exec_command(["rpm", "-i", "http://yum.postgresql.org/9.3/redhat/rhel-"+tempVersion+"-"+self.os().hardware_type+"/pgdg-centos93-9.3-1.noarch.rpm"])
+        #if(result["returncode"]!=0):
+            #raise Exception(result)#already installed
         result=self.os().lowlevel.exec_command(["yum", "-y","install", "postgresql93-server"])
         if(result["returncode"]!=0):
             raise Exception(result)
 
     def __install_centos_92__(self):
         tempVersion=self.os().distribution_version.split(".")[0]
-        result=self.os().lowlevel.exec_command(["rpm", "-i", "http://yum.postgresql.org/9.2/redhat/rhel-"+tempVersion+"-"+self.os().hardware_type+"/pgdg-centos92-9.2-6.noarch.rpm"])
-        if(result["returncode"]!=0):
-            raise Exception(result)
+        self.os().rpm_i("http://yum.postgresql.org/9.3/redhat/rhel-"+tempVersion+"-"+self.os().hardware_type+"/pgdg-centos92-9.2-6.noarch.rpm")
+        #result=self.os().lowlevel.exec_command(["rpm", "-i", "http://yum.postgresql.org/9.2/redhat/rhel-"+tempVersion+"-"+self.os().hardware_type+"/pgdg-centos92-9.2-6.noarch.rpm"])
+        #if(result["returncode"]!=0):
+        #    raise Exception(result)
         result=self.os().lowlevel.exec_command(["yum", "-y","install", "postgresql92-server"])
         if(result["returncode"]!=0):
             raise Exception(result)
 
     def __install_centos_91__(self):
         tempVersion=self.os().distribution_version.split(".")[0]
-        result=self.os().lowlevel.exec_command(["rpm", "-i", "http://yum.postgresql.org/9.1/redhat/rhel-"+tempVersion+"-"+self.os().hardware_type+"/pgdg-centos91-9.1-4.noarch.rpm"])
-        if(result["returncode"]!=0):
-            raise Exception(result)
+        self.os().rpm_i("http://yum.postgresql.org/9.3/redhat/rhel-"+tempVersion+"-"+self.os().hardware_type+"/pgdg-centos91-9.1-4.noarch.rpm")
+        #result=self.os().lowlevel.exec_command(["rpm", "-i", "http://yum.postgresql.org/9.1/redhat/rhel-"+tempVersion+"-"+self.os().hardware_type+"/pgdg-centos91-9.1-4.noarch.rpm"])
+        #if(result["returncode"]!=0):
+        #    raise Exception(result)
         result=self.os().lowlevel.exec_command(["yum", "-y","install", "postgresql91-server"])
         if(result["returncode"]!=0):
             raise Exception(result)
