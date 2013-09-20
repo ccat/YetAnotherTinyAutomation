@@ -110,8 +110,12 @@ class OS(interfaces.Package):
 
     def yum_install(self,commands):
         commandList=["yum", "-y","install" ]
-        for item in commands:
-            commandList.append(item)
+        if(isinstance(commands,list)):
+            for item in commands:
+                commandList.append(item)
+        else:
+            commandList.append(commands)
+
         result=self.lowlevel.exec_command(commandList)
         if(result["returncode"]!=0):
             raise Exception(result)
