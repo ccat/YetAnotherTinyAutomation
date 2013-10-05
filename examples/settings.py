@@ -20,5 +20,6 @@ logger.setLevel(logging.DEBUG)
 #Packages
 from modules import packages
 from modules.packages import basics
+from modules.packages import mailer
 from modules.packages.postgresql.basics import Postgresql
 

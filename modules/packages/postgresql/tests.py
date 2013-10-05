@@ -13,7 +13,7 @@ class PostgresqlTest(unittest.TestCase):
     def setUp(self):
         self.manager=manager.init(settings=default_settings)
         self.postgres=basics.Postgresql("postgresql",self.manager.dataStore.get("localhost"))
-        self.postgres.configure(version="9.1")
+        self.postgres.configure(version="9.1.9")
         self.postgres.addDBcluster(clusterName="testDB",dir="/tmp/testDB",encoding="UTF8",locale=None,username="postgres")
 
         import os
@@ -24,41 +24,26 @@ class PostgresqlTest(unittest.TestCase):
 
     def test_initialize(self):
         self.assertEqual(self.postgres.username,"postgres")
-        #self.assertEqual(self.postgres.bin_path,"/usr/lib/postgresql/9.1/bin") #for ubuntu
-        #self.assertEqual(self.postgres.dbClusters["default"],{"dir":"","encoding":"UTF8","locale":None,"superuser":"postgres"}) #for ubuntu
-        #self.postgres.addDBcluster(clusterName="default",dir="/tmp/testDB",encoding="UTF8",locale=None,username="postgres")
-        #self.assertEqual(self.postgres.dbClusters["default"]["dir"],"/tmp/testDB")
-
-    #def test_install(self):
-    #    self.manager.dataStore.get("localhost").diagnosis()
-    #    self.postgres.install
-
-
-    """
-    def test_lowlevel_initdb(self):
-        self.postgres.diagnosis()
-        result=self.postgres.lowlevel.initdb("testDB")
-        self.assertEqual(result["returncode"],0)
-        result=self.postgres.lowlevel.initdb("testDB")
-        self.assertEqual(result["returncode"],1)
-
-    def test_lowlevel_pg_ctl(self):
-        self.postgres.diagnosis()
-        result=self.postgres.lowlevel.pg_ctl.initdb("testDB")
-        self.assertEqual(result["returncode"],0)
-        result=self.postgres.lowlevel.pg_ctl.initdb("testDB")
-        self.assertEqual(result["returncode"],1)
-        result=self.postgres.lowlevel.pg_ctl.start("testDB",wait=True,timeout=10)
-        self.assertEqual(result["returncode"],0)
 
     def test_diagnosis(self):
         result=self.postgres.diagnosis()
         self.assertEqual(result,
                          {"level":"NORMAL",
-                                "version":{"level":"NORMAL","config":"9.1","status":"9.1"},
-                                "bin_path":{"level":"INFO","config":None,"status":"/usr/lib/postgresql/9.1/bin"},
+                                "installed":{"level":"NORMAL","config":True,"status":True},
+                                "version":{"level":"NORMAL","config":"9.1.9","status":"9.1.9"},
                         })
-    """
+    
+    def test_backup(self):
+        result=self.postgres.diagnosis()
+        self.postgres.lowlevel.pg_dumpall(filename="./backup.sql")
+        self.postgres.lowlevel.pg_dumpall(filename="./backup_%num%.sql")
+        self.postgres.lowlevel.pg_dumpall(filename="./backup_%num%.sql")
+        self.postgres.lowlevel.pg_dumpall(filename="./backup_%num%.sql.gz",withCompress=True)
+        self.postgres.lowlevel.pg_dumpall(filename="./backup_%num%.sql",withClean=True,withColumnInsert=True)
+        import os
+        self.assertTrue(os.path.exists("./backup.sql"))
+        result=self.postgres.lowlevel.psql_restore(filename="./backup.sql")
+
 
 if __name__ == '__main__':
     unittest.main()

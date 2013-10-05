@@ -10,7 +10,7 @@ class Postgresql(interfaces.Package):
         
         self.username="postgres"
         self.bin_path=None#"/usr/lib/postgresql/9.1/bin"
-        self.dbClusters={}#{"default":{"dir":"","encoding":"UTF8","locale":None,"superuser":"postgres"}}
+        self.dbClusters={}#{"default":{"maindir":"","configdir":"","encoding":"UTF8","locale":None,"superuser":"postgres"}}
         self.version=None
         self.installed=None
         
@@ -29,18 +29,69 @@ class Postgresql(interfaces.Package):
             self.version=version
             
     def diagnosis(self):
-        result=self.os().lowlevel.exec_command(["whereis","psql"])
-        if(result["returncode"]==0):
-            self.installed=True
+        result={}
+        level="NORMAL"
+
+        tempResult=self.os().lowlevel.exec_command(["whereis","psql"])
+        if(tempResult["returncode"]==0):
+            installed=True
+            level,result=self.__diagnosis_installed__(result)
         else:
-            self.installed=False
-        #"cat /etc/passwd | grep postgres"
+            installed=False
+
+        if(self.installed==None):
+            self.installed=installed
+
+        if(self.installed==installed):
+            insLevel="NORMAL"
+        else:
+            insLevel="ERROR"
+            level="ERROR"
+        result["installed"]={"level":insLevel,"config":self.installed,"status":installed}
+        
+        result["level"]=level
+        return result
+
+    def __diagnosis_installed__(self,result):
+        level="NORMAL"
+        version=self.version_check()
+        if(self.version==None):
+            self.version=version
+        elif(self.version!=version):
+            level="ERROR"
+        result["version"]={"level":level,"config":self.version,"status":version}
+
+        if(self.dbClusters=={}):
+            #if(self.os().distribution_name=="CentOS"):
+            #    self.dbClusters["default"]={"maindir":None,"configdir":None,"encoding":None,"locale":None,"superuser":"postgres"}
+            if(self.os().distribution_name=="Ubuntu"):
+                if(version.startswith("9.1")):
+                    shortVersion="9.1"
+                elif(version.startswith("9.2")):
+                    shortVersion="9.2"
+                elif(version.startswith("9.3")):
+                    shortVersion="9.3"
+                self.dbClusters["default"]={"maindir":"/var/lib/postgresql/"+shortVersion+"/main","configdir":"/etc/postgresql/"+shortVersion+"/main","encoding":None,"locale":None,"superuser":"postgres"}
+
+            self.dbClusters["default"]={"maindir":None,"configdir":None,"encoding":None,"locale":None,"superuser":"postgres"}
+
+        return level,result
+        
+    def version_check(self):
+        result=self.os().lowlevel.exec_command(["psql","--version"],raiseOnError=True)
+        versionLine=result["stdout"].split("\n")[0]
+        version=versionLine.replace("psql (PostgreSQL) ","")
+        return version
+        #psql (PostgreSQL) 9.1.9
+
         
     def install(self):
         if(self.os().distribution_name=="CentOS"):
             self.__install_centos__()
         elif(self.os().distribution_name=="Ubuntu"):
             self.__install_ubuntu__()
+            #self.dbClusters={}#{"default":{"dir":"","encoding":"UTF8","locale":None,"superuser":"postgres"}}
+
         #if(self.os()=="Debian"):
         #    return self.__install_debian__()
         #if(self.os()=="Fedora"):
@@ -168,6 +219,64 @@ class Lowlevel(object):
             command.append(dbCluster["superuser"])
        
         return self.postgresql.os().lowlevel.exec_command(command)
+
+    def pg_dumpall(self,filename,cluster="default",withClean=False,withColumnInsert=False,withCompress=False):
+        """
+        withClean : Output SQL includes drop commands for existing databases.
+        withColumnInsert : Output SQL uses insert instead of copy.
+        withCompress : Outpu SQL is compressed by gzip
+        
+        if filename inclueds "%num%", it will be changed as YYYYMMDD_number
+        """
+        if(cluster!="default"):
+            raise Exception("None default cluster backup by pg_dumpall is not implemented now.")
+        #dbCluster=self.postgresql.dbClusters[cluster]
+        
+        if(filename.find("%num%")!=-1):
+            import datetime
+            ymd=datetime.date.today().strftime("%Y%m%d")
+            num=1
+            tempfilename=filename.replace("%num%",ymd+"_"+str(num))
+            import os
+            while(os.path.exists(tempfilename)):
+                num=num+1
+                tempfilename=filename.replace("%num%",ymd+"_"+str(num))
+            filename=tempfilename
+        
+        #command=["sudo","-u",self.postgresql.username,"pg_dumpall","--file="+filename,"-w"]
+        commandTemp="pg_dumpall -w"
+        if(withClean):
+            commandTemp=commandTemp+" -c" 
+        if(withColumnInsert):
+            commandTemp=commandTemp+" --column-inserts"
+        
+        commandTemp=commandTemp+" > /tmp/backup.sql"
+        
+        command=[commandTemp]
+        
+        if(withCompress):
+            command.append("gzip -c > /tmp/backup.sql.gz")
+            command.append("mv /tmp/backup.sql.gz "+filename)
+        else:
+            command.append("mv /tmp/backup.sql "+filename)
+        command.append("rm -f /tmp/backup.sql")
+        #result=self.postgresql.os().lowlevel.exec_command(command,shell=True,raiseOnError=True)
+        result=self.postgresql.os().lowlevel.exec_script(command,runuser=self.postgresql.username,raiseOnError=True)
+        return result
+    
+    def psql_restore(self,filename,cluster="default",withCompress=False):
+        if(cluster!="default"):
+            raise Exception("None default cluster backup by pg_dumpall is not implemented now.")
+
+        command="sudo -u "+self.postgresql.username +" sh -c \" cat "+filename+" | "
+        if(withCompress):
+            command=command+" gunzip | "
+        command=command+"psql postgres \" "
+
+        result=self.postgresql.os().lowlevel.exec_command(command,shell=True,raiseOnError=True)
+        return result
+    
+    #(cluster="default",filename="/tmp/backup.sql")
 
 class Pg_ctl(object):
     def __init__(self,postgresql):

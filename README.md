@@ -21,6 +21,15 @@ sudo python ./postgrsql_install.py <version>
  * version=9.1/9.2/9.3
 
 
+To backup PostgreSQL database
+
+git clone http://github.com/ccat/YetAnotherTinyAutomation
+cd ./YetAnotherTinyAutomation/examples
+sudo python ./postgrsql_backup.py filepath <from gmail address> <to address> <gmail username> <gmail application password>
+
+When filepath includes "%num%", it will be replaced by date.
+When "from gmail address" to "gmail application password" are inputted, backup data will be sent.
+
 
 
 YetAnotherTinyAutomation 0.01
@@ -51,4 +60,14 @@ git clone http://github.com/ccat/YetAnotherTinyAutomation
 cd ./YetAnotherTinyAutomation/examples
 sudo python ./postgrsql_install.py <version>
  * version=9.1/9.2/9.3
+
+
+PostgreSQLをバックアップ
+
+git clone http://github.com/ccat/YetAnotherTinyAutomation
+cd ./YetAnotherTinyAutomation/examples
+sudo python ./postgrsql_backup.py filepath <from gmail address> <to address> <gmail username> <gmail application password>
+
+filepathに「%num%」が含まれていた場合、日付に置換されます。
+gmail関係のオプションが入力された場合、バックアップデータはメール添付で送信されます。
 

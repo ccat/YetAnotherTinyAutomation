@@ -2,6 +2,9 @@
 
 from .. import interfaces
 
+import os
+import subprocess
+
 class OS(interfaces.Package):
     def __init__(self,packageName,server):
         interfaces.Package.__init__(self,packageName, server)
@@ -132,17 +135,43 @@ class OS_lowlevel(object):
     def __init__(self,parent):
         self.parent=parent
 
-    def exec_command(self,command,stdin=None,shell=False):
+    def exec_command(self,command,stdin=None,shell=False,raiseOnError=False):
         if(self.parent.server.mainIPaddr!="127.0.0.1"):
             raise Exception("command can be executed only 127.0.0.1.  ToDo: NEED TO IMPLEMENT")
         if(shell==False and isinstance(command,list)==False):
             import shlex
             command=shlex.split(command)
 
-        import subprocess
         p = subprocess.Popen(command,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=shell)
 
         (stdoutdata, stderrdata) =p.communicate(stdin) 
         result={"returncode":p.returncode,"stdout":stdoutdata,"stderr":stderrdata}
+        if(raiseOnError and p.returncode!=0):
+            raise Exception(result)
         return result
 
+    def exec_script(self,script=[],runuser="",raiseOnError=False):
+        if(self.parent.server.mainIPaddr!="127.0.0.1"):
+            raise Exception("command can be executed only 127.0.0.1.  ToDo: NEED TO IMPLEMENT")
+        #if(os.path.exists("/tmp/")):
+        f=open("/tmp/tempscript","w")
+        f.write("set -e\n")
+        if(isinstance(script,list)):
+            for line in script:
+                f.write(line+"\n")
+        else:
+            f.write(script+"\n")
+        f.close()
+        import stat
+        os.chmod("/tmp/tempscript", stat.S_IROTH+stat.S_IXOTH+stat.S_IWUSR+stat.S_IRUSR+stat.S_IXUSR)
+        command=["sudo"]
+        if(runuser!=""):
+            command.append("-u")
+            command.append(runuser)
+        command.append("/tmp/tempscript")
+        result=self.exec_command(command, raiseOnError=raiseOnError)
+        os.remove("/tmp/tempscript")
+        return result
+
+    
+    

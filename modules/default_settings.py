@@ -21,5 +21,5 @@ logger.setLevel(logging.DEBUG)
 #Packages
 import packages
 import packages.basics
-
+import packages.mailer
 
