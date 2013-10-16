@@ -10,7 +10,7 @@ def main():
     """
     python postgresql_backup.py filepath <from gmail address> <to address> <gmail username> <gmail application password>
     """
-    
+
     manage=manager.init(settings=settings)
     postgresql=settings.Postgresql("postgresql",manage.dataStore.get("localhost"))
 
@@ -23,7 +23,7 @@ def main():
         password=argvs[5]
     else:
         fromAddr=None
-    
+
     print "Running diagnosis"
     result=manage.dataStore.get("localhost").diagnosis()
     print "Running pg_backupall"
@@ -33,8 +33,8 @@ def main():
         import datetime
         ymd=datetime.date.today().strftime("%Y%m%d")
         print "Sending mail"
-        mailer=settings.mailer.Mailer("mailer",self.manager.dataStore.get("localhost"),fromAddr)
+        mailer=settings.mailer.Mailer("mailer",manage.dataStore.get("localhost"),fromAddr)
         mailer.sendByGmail(toAddr,username,password,"PostgreSQL Backup data "+ymd,"This is Backup data of PostgreSQL at "+ymd,attachFilenames=[filepath])
-    
+
 if __name__ == '__main__':
     main()
